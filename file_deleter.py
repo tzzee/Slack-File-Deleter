@@ -14,9 +14,9 @@ __author__ = 'TetraEtc'
 from slacker import Slacker
 import sys
 from datetime import timedelta, datetime
+import argparse
 
-
-def main(token, weeks):
+def main(token, weeks, dry_run):
     """
     Main function
     :param token: Available at. https://api.slack.com/web. REQUIRED
@@ -52,25 +52,19 @@ def main(token, weeks):
     count = 1
     for file in files_to_delete:
         print("Deleting file {} of {}".format(count, len(files_to_delete)))
-        slack.files.delete(file_=file['id'])
-        print("Deleted Successfully")
+        if dry_run:
+            pass
+        else:
+            slack.files.delete(file_=file['id'])
+            print("Deleted Successfully")
         count += 1
 
 
 if __name__ == "__main__":
-    weeks = 4
-    try:
-        args = sys.argv[1:]
-        token = args [0]
-        if len(args) > 1:
-            try:
-                weeks=int(args[1])
-            except ValueError:
-                print("If given, second argument must be of type int")
-                sys.exit(2)
-    except IndexError:
-        print("Please provide an API Token")
-        print("Usage: python file_deleter.py api_token [weeks]")
-        sys.exit(2)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--dry-run', dest='dry_run', help='show what would have been deleted', action='store_true')
+    parser.add_argument('token', nargs=1, help='Slack API token')
+    parser.add_argument('weeks', nargs='?', type=int, default=4, help='Number of weeks')
+    args = parser.parse_args()
 
-    main(token, weeks)
+    main(args.token, args.weeks, args.dry_run)
