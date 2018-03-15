@@ -11,7 +11,7 @@ token (REQUIRED): Slack API token, available at https://api.slack.com/web
 number_of_weeks (OPTIONAL): Integer - Defaults to 4.
 """
 __author__ = 'TetraEtc'
-from slacker import Slacker
+from slacker import Slacker, Error
 import sys
 from datetime import timedelta, datetime
 import argparse
@@ -55,11 +55,14 @@ def main(token, weeks, dry_run):
         if dry_run:
             pass
         else:
-            response=slack.files.delete(file_=file['id'])
-            if response.body['ok']:
-            	print("Deleted Successfully")
-            else:
-                print("Delete Failed")
+            try:
+                response=slack.files.delete(file_=file['id'])
+                if response.body['ok']:
+            	    print("Deleted Successfully")
+                else:
+                    print("Delete Failed")
+            except Error as e:
+                print(e)
 
 
 if __name__ == "__main__":
