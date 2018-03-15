@@ -30,7 +30,7 @@ def main(token, weeks, dry_run):
     print("{} files to be processed, across {} pages".format(total, num_pages))
     # Get files
     files_to_delete = []
-    ids = [] # For checking that the API doesn't return duplicate files (Don't think it does, doesn't hurt to be sure
+    ids = set() # For checking that the API doesn't return duplicate files (Don't think it does, doesn't hurt to be sure
     count = 1
     for page in range(num_pages):
         print ("Pulling page number {}".format(page + 1))
@@ -39,25 +39,27 @@ def main(token, weeks, dry_run):
             print("Checking file number {}".format(count))
             # Checking for duplicates
             if file['id'] not in ids:
-                ids.append(file['id'])
+                ids.add(file['id'])
                 if datetime.fromtimestamp(file['timestamp']) < datetime.now() - timedelta(weeks=weeks):
                     files_to_delete.append(file)
                     print("File No. {} will be deleted".format(count))
+                    print("\"{}\"@{}".format(file['name'], datetime.fromtimestamp(file['timestamp'])))
                 else:
                     print ("File No. {} will not be deleted".format(count))
             count+=1
 
     print("All files checked\nProceeding to delete files")
     print("{} files will be deleted!".format(len(files_to_delete)))
-    count = 1
-    for file in files_to_delete:
-        print("Deleting file {} of {}".format(count, len(files_to_delete)))
+    for count,file in enumerate(files_to_delete):
+        print("Deleting file {} of {}".format(count+1, len(files_to_delete)))
         if dry_run:
             pass
         else:
-            slack.files.delete(file_=file['id'])
-            print("Deleted Successfully")
-        count += 1
+            response=slack.files.delete(file_=file['id'])
+            if response.body['ok']:
+            	print("Deleted Successfully")
+            else:
+                print("Delete Failed")
 
 
 if __name__ == "__main__":
